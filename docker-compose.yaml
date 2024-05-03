@@ -1,0 +1,75 @@
+version: '3.9'
+services:
+  job_handler:
+    container_name: job_handler
+    image: rsrivastava/job_handler:1.0.0
+    build: ../job-scheduler/job-handler-service
+    ports:
+      - 8080:8080
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres_db:5432/postgres
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+    depends_on:
+      - postgres_db
+#    volumes:
+#      - ../job-scheduler/job-handler-service:/usr/src/app
+
+
+  job_executor1:
+    container_name: job_executor1
+    image: rsrivastava/job_executor:1.0.0
+    build: ../job-scheduler/job-executor-service
+    restart: always
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres_db:5432/postgres
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CRON_EXPRESSION=* * * * * *
+      - ID=1
+    depends_on:
+      - postgres_db
+      - redis
+
+  job_executor2:
+    container_name: job_executor2
+    image: rsrivastava/job_executor:1.0.0
+    build: ../job-scheduler/job-executor-service
+    restart: always
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres_db:5432/postgres
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CRON_EXPRESSION=* * * * * *
+      - ID=2
+    depends_on:
+      - postgres_db
+      - redis
+
+#    volumes:
+#      - ../job-scheduler/job-executor-service:/usr/src/app
+
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+    - 6379:6379
+
+  postgres_db:
+    container_name: postgres_db
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata: {}
